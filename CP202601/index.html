@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Exhibition — Interactive Works</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header>
+  <h1>Interactive Design Major</h1>
+  <span class="meta">Computational Prototyping Works</span>
+</header>
+
+<div class="wrap">
+  <nav id="nav"></nav>
+
+  <main>
+    <div class="stage" id="stage">
+      <div class="placeholder">Select a work from the list to load it here.</div>
+    </div>
+
+    <div class="plaque" id="plaque" style="display:none;">
+      <h2 id="plaque-title"></h2>
+      <span class="artist" id="plaque-artist"></span>
+      <p class="desc" id="plaque-desc"></p>
+    </div>
+
+    <div class="footer">
+      <button class="fullscreen-btn" id="fullscreen-btn" type="button" title="Toggle fullscreen">
+        <span id="fullscreen-label">Fullscreen</span>
+      </button>
+      <span class="hint">Click into the frame, then interact directly with the work.</span>
+    </div>
+  </main>
+</div>
+
+<script src="app.js"></script>
+
+</body>
+</html>
