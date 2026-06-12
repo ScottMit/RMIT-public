@@ -1074,8 +1074,13 @@ function drawInstructions() {
 
   textSize(30);
 
+  // Pulsing prompt so the call-to-action reads as interactive,
+  // not just decorative text on the instruction screen.
+  const pulse = 180 + sin(frameCount * 0.08) * 75;
+  fill(0, 255, 255, pulse);
+
   text(
-    "PRESS ENTER TO START",
+    "TAP ANYWHERE TO START",
     width / 2,
     780
   );
@@ -1224,6 +1229,17 @@ function keyPressed() {
 
     showInstructions =
       false;
+  }
+}
+
+// Touch / mouse dismiss for the instruction screen. p5 fires
+// mousePressed for both mouse clicks and single-finger taps on
+// touchscreens, so this works on the kiosk and on desktop.
+function mousePressed() {
+
+  if (showInstructions) {
+
+    showInstructions = false;
   }
 }
 

@@ -41,14 +41,7 @@ let manualEmotion = null;
 
 let emotionColour;
 
-if (currentEmotion === "happy") emotionColour = color(150, 255, 255);
-else if (currentEmotion === "sad") emotionColour = color(220, 255, 255);
-else if (currentEmotion === "surprised") emotionColour = color(290, 255, 255);
-else if (currentEmotion === "fearful") emotionColour = color(0, 255, 255);
-else emotionColour = color(255);
-
-fill(emotionColour);
-text("Emotion: " + currentEmotion, 30, camH + 35);
+let calibrateBtn = null;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -65,6 +58,55 @@ function setup() {
   setupFaceTracking();
 
   createParticles();
+  createCalibrateButton();
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+  // Camera preview is anchored to the top-left, so the button keeps
+  // its absolute position — no repositioning needed on resize.
+}
+
+// ── CALIBRATION ──────────────────────────────────────────────────
+// Snap the current smile / mouth / movement values as the viewer's
+// "neutral" baseline. Used by both the on-screen button (touch) and
+// the C key (kept for desktop / dev convenience).
+function calibrate() {
+  neutralSmile = smileSmooth;
+  neutralMouth = mouthOpenSmooth;
+  neutralMovement = faceMovementSmooth;
+  calibrated = true;
+  if (calibrateBtn) calibrateBtn.html("CALIBRATED · TAP AGAIN");
+  console.log("Calibrated neutral face");
+}
+
+function createCalibrateButton() {
+  // Camera preview lives at (20, 20) at 240×180; this button sits
+  // just below the stats lines inside that preview panel.
+  const camW = 240;
+  const camH = 180;
+
+  calibrateBtn = createButton("TAP TO CALIBRATE FACE");
+  calibrateBtn.position(30, 20 + camH + 100);
+  calibrateBtn.style("width",          camW - 20 + "px");
+  calibrateBtn.style("background",     "transparent");
+  calibrateBtn.style("border",         "1px solid rgba(255,255,255,0.6)");
+  calibrateBtn.style("color",          "#fff");
+  calibrateBtn.style("font-family",    "monospace");
+  calibrateBtn.style("font-size",      "11px");
+  calibrateBtn.style("letter-spacing", "0.12em");
+  calibrateBtn.style("padding",        "8px 10px");
+  calibrateBtn.style("cursor",         "pointer");
+  calibrateBtn.style("transition",     "background 0.15s ease, color 0.15s ease");
+  calibrateBtn.mouseOver(() => {
+    calibrateBtn.style("background", "rgba(255,255,255,0.85)");
+    calibrateBtn.style("color",      "#000");
+  });
+  calibrateBtn.mouseOut(() => {
+    calibrateBtn.style("background", "transparent");
+    calibrateBtn.style("color",      "#fff");
+  });
+  calibrateBtn.mousePressed(calibrate);
 }
 function setupFaceTracking() {
   video = createCapture(VIDEO, () => {
@@ -129,8 +171,9 @@ function drawCameraPreview() {
   text("Smile: " + nf(smileSmooth, 1, 2), 30, camH + 60);
 
   text("Mouth: " + nf(mouthOpenSmooth, 1, 2), 30, camH + 80);
-  
-  text("Press C to calibrate neutral face", 30, camH + 105);
+
+  // The on-screen "TAP TO CALIBRATE FACE" button (created in setup)
+  // sits where the old keyboard prompt used to be drawn.
 
   pop();
 }
@@ -461,14 +504,10 @@ let smoothness = map(calmAmount, 0, 1, formationSpeed, formationSpeed * 0.55);
   }
 }
 
+// Keyboard shortcut kept as a convenience for desktop / dev use;
+// the touchscreen kiosk uses the on-screen button created in setup.
 function keyPressed() {
-  if (key === "c" || key === "C") {
-    neutralSmile = smileSmooth;
-    neutralMouth = mouthOpenSmooth;
-    neutralMovement = faceMovementSmooth;
-    calibrated = true;
-    console.log("Calibrated neutral face");
-  }
+  if (key === "c" || key === "C") calibrate();
 
   if (key === "0") manualEmotion = null;
   if (key === "1") manualEmotion = "neutral";
