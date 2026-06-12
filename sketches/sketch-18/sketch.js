@@ -45,10 +45,26 @@ let spawnTimer = 0;
 let spawnInterval = 80;
 
 // =====================================
-// ROAD CONSTANTS
+// LAYOUT CONSTANTS
 // =====================================
 
+// The canvas is split into two panels side-by-side:
+//   [ GAME (fixed width, left) | CAMERA (flex, right) ]
+//
+// The game panel stays a fixed GAME_WIDTH × GAME_HEIGHT so the
+// hard-coded road / obstacle math never has to rescale. The camera
+// panel takes whatever horizontal space is left in the viewport, so
+// nothing gets cropped on a narrow kiosk — the video just stretches
+// to fit the right-hand strip.
+const GAME_WIDTH  = 800;
 const GAME_HEIGHT = 600;
+const CANVAS_H    = GAME_HEIGHT;
+
+// Width of the camera panel at any given moment — derived from the
+// live canvas width minus the (fixed) game panel.
+function cameraWidth() {
+  return max(0, width - GAME_WIDTH);
+}
 
 const HORIZON_Y = 120;
 const PLAYER_Y = 520;
@@ -73,7 +89,10 @@ function preload() {
 
 function setup() {
 
-  createCanvas(800, 1200);
+  // Canvas fills the viewport horizontally so the game (fixed left
+  // panel) never overflows the iframe. Height is fixed to match the
+  // game's road-perspective math.
+  createCanvas(windowWidth, CANVAS_H);
 
   textFont("Arial");
 
@@ -94,6 +113,13 @@ function setup() {
   // Preload-blocked, so the ml5 model is ready by now — drop the
   // black-on-black "Loading…" overlay before the first paint.
   document.getElementById('loading-overlay')?.remove();
+}
+
+function windowResized() {
+  // Keep the canvas as wide as the viewport so the fixed-width game
+  // panel never overflows and the camera panel adapts to whatever
+  // strip remains on the right.
+  resizeCanvas(windowWidth, CANVAS_H);
 }
 
 // =====================================
@@ -964,33 +990,16 @@ function drawUI() {
 
   if (gameOver) {
 
-    textAlign(
-      CENTER
-    );
+    textAlign(CENTER);
 
-    fill(
-      255,
-      50,
-      50
-    );
-
+    fill(255, 50, 50);
     textSize(60);
-
-    text(
-      "GAME OVER",
-      width / 2,
-      height / 2
-    );
+    // Centre over the game panel, not the full canvas.
+    text("GAME OVER", GAME_WIDTH / 2, GAME_HEIGHT / 2);
 
     fill(255);
-
     textSize(24);
-
-    text(
-      "CLAP TO RESTART",
-      width / 2,
-      height / 2 + 60
-    );
+    text("TOUCH THE SCREEN TO RESTART", GAME_WIDTH / 2, GAME_HEIGHT / 2 + 60);
   }
 }
 
@@ -1004,220 +1013,136 @@ function drawInstructions() {
 
   textAlign(CENTER);
 
-  fill(0,255,255);
+  // Instructions centre on the GAME panel (left half) — the camera
+  // panel sits empty on the right until the game starts.
+  const cx = GAME_WIDTH / 2;
 
-  textSize(60);
+  // ── Title block ─────────────────────────────────────
+  fill(0, 255, 255);
+  textSize(44);
+  text("OUTLAST",   cx, 70);
+  text("THE CUBES", cx, 120);
 
-  text(
-    "OUTLAST",
-    width / 2,
-    100
-  );
+  // ── Section header ──────────────────────────────────
+  textSize(20);
+  text("SURVIVAL GUIDE", cx, 180);
 
-  text(
-    "THE CUBES",
-    width / 2,
-    170
-  );
-
-  textSize(30);
-
-  text(
-    "SURVIVAL GUIDE",
-    width / 2,
-    260
-  );
-
+  // ── Controls list ───────────────────────────────────
   fill(255);
+  textSize(18);
+  text("Lean LEFT = Move Left Lane",          cx, 225);
+  text("Lean RIGHT = Move Right Lane",        cx, 255);
+  text("Raise Both Hands = Jump",             cx, 285);
+  text("Lower Head Below Blue Line = Duck",   cx, 315);
 
-  textSize(22);
+  // ── Cubes legend ────────────────────────────────────
+  text("Orange Cube = Change Lane", cx, 360);
+  text("Green Cube = Jump",         cx, 390);
+  text("Blue Cube = Duck",          cx, 420);
 
-  text(
-    "Lean LEFT = Move Left Lane",
-    width / 2,
-    340
-  );
-
-  text(
-    "Lean RIGHT = Move Right Lane",
-    width / 2,
-    390
-  );
-
-  text(
-    "Raise Both Hands = Jump",
-    width / 2,
-    440
-  );
-
-  text(
-    "Lower Head Below Blue Line = Duck",
-    width / 2,
-    490
-  );
-
-  text(
-    "Orange Cube = Change Lane",
-    width / 2,
-    560
-  );
-
-  text(
-    "Green Cube = Jump",
-    width / 2,
-    610
-  );
-
-  text(
-    "Blue Cube = Duck",
-    width / 2,
-    660
-  );
-
-  fill(0,255,255);
-
-  textSize(30);
-
-  // Pulsing prompt so the call-to-action reads as interactive,
-  // not just decorative text on the instruction screen.
+  // ── Pulsing call-to-action ──────────────────────────
+  textSize(26);
   const pulse = 180 + sin(frameCount * 0.08) * 75;
   fill(0, 255, 255, pulse);
-
-  text(
-    "TAP ANYWHERE TO START",
-    width / 2,
-    780
-  );
+  text("TAP ANYWHERE TO START", cx, 490);
 }
 
 // =====================================
 // CAMERA
 // =====================================
+//
+// Camera + body-pose preview lives in the right-hand strip of the
+// canvas (x = GAME_WIDTH … width, y = 0 … CANVAS_H). The strip is
+// whatever horizontal space the viewport leaves after the fixed
+// game panel — the video stretches to fill it. Mirrored so the
+// viewer reads it as a mirror image of themselves.
 
 function drawCameraPreview() {
 
+  const camW = cameraWidth();
+  const camH = CANVAS_H;
+  // Skip drawing if the viewport is too narrow to have a camera strip
+  if (camW <= 0) return;
+
+  // Subtle divider so the eye reads the two halves as separate panels
+  stroke(0, 255, 255, 60);
+  strokeWeight(1);
+  line(GAME_WIDTH, 0, GAME_WIDTH, CANVAS_H);
+
+  // ── Letterbox math ──────────────────────────────────
+  // The video is 640×480 (4:3). The camera panel is whatever width
+  // is left of the viewport × 600 tall. Compute the largest 4:3
+  // rectangle that fits inside the panel and centre it. drawW/drawH
+  // are the displayed video size; offX/offY are the margins inside
+  // the panel.
+  const videoAspect = 640 / 480;
+  const areaAspect  = camW / camH;
+  let drawW, drawH, offX, offY;
+  if (areaAspect > videoAspect) {
+    // Panel is wider than 4:3 → fit by height, side bars on left+right
+    drawH = camH;
+    drawW = camH * videoAspect;
+    offX  = (camW - drawW) / 2;
+    offY  = 0;
+  } else {
+    // Panel is taller than 4:3 → fit by width, bars on top+bottom
+    drawW = camW;
+    drawH = camW / videoAspect;
+    offX  = 0;
+    offY  = (camH - drawH) / 2;
+  }
+  // Single uniform scale factor for keypoints (drawW/640 == drawH/480)
+  const ptScale = drawW / 640;
+
   push();
 
-  translate(
-    width,
-    600
-  );
+  // Origin at the top-right corner of the canvas, then mirror x.
+  // In this transformed space, drawing at (offX, offY) lands at the
+  // top-right of the centred video; drawing at (offX + drawW,
+  // offY + drawH) lands at the top-left/bottom corner.
+  translate(width, 0);
+  scale(-1, 1);
 
-  scale(-1,1);
+  image(video, offX, offY, drawW, drawH);
 
-  image(
-    video,
-    0,
-    0,
-    width,
-    600
-  );
+  for (let pose of poses) {
 
-  let scaleX =
-    width / 640;
-
-  let scaleY =
-    600 / 480;
-
-  for (
-    let pose of poses
-  ) {
-
-    for (
-      let connection
-      of connections
-    ) {
-
-      let a =
-        pose.keypoints[
-          connection[0]
-        ];
-
-      let b =
-        pose.keypoints[
-          connection[1]
-        ];
-
-      stroke(
-        0,
-        255,
-        255
-      );
-
+    for (let connection of connections) {
+      const a = pose.keypoints[connection[0]];
+      const b = pose.keypoints[connection[1]];
+      stroke(0, 255, 255);
       strokeWeight(2);
-
       line(
-        a.x * scaleX,
-        a.y * scaleY,
-        b.x * scaleX,
-        b.y * scaleY
+        a.x * ptScale + offX, a.y * ptScale + offY,
+        b.x * ptScale + offX, b.y * ptScale + offY
       );
     }
 
-    for (
-      let point
-      of pose.keypoints
-    ) {
-
-      fill(
-        0,
-        255,
-        255
-      );
-
+    for (let point of pose.keypoints) {
+      fill(0, 255, 255);
       noStroke();
-
-      circle(
-        point.x *
-          scaleX,
-        point.y *
-          scaleY,
-        12
-      );
+      circle(point.x * ptScale + offX, point.y * ptScale + offY, 12);
     }
   }
 
   pop();
 
-  // DUCK LINE
-
-  let scaledDuckLine =
-    map(
-      duckLineY,
-      0,
-      480,
-      600,
-      1200
-    );
-
-  stroke(
-    0,
-    150,
-    255
-  );
-
+  // ── DUCK LINE — drawn across the displayed video only, so it
+  //    lines up with the bottom of the camera image rather than
+  //    floating over the black letterbox bars.
+  const duckY      = offY + duckLineY * ptScale;
+  const duckXStart = GAME_WIDTH + offX;
+  const duckXEnd   = GAME_WIDTH + offX + drawW;
+  stroke(0, 150, 255);
   strokeWeight(3);
+  line(duckXStart, duckY, duckXEnd, duckY);
 
-  line(
-    0,
-    scaledDuckLine,
-    width,
-    scaledDuckLine
-  );
-
+  // ── Gesture label centred over the camera panel ──
   fill(255);
-
   noStroke();
-
   textAlign(CENTER);
-
   textSize(40);
-
-  text(
-    gesture,
-    width / 2,
-    640
-  );
+  text(gesture, GAME_WIDTH + camW / 2, 50);
 }
 
 // =====================================
@@ -1244,6 +1169,15 @@ function mousePressed() {
   if (showInstructions) {
 
     showInstructions = false;
+    return;
+  }
+
+  // Touch / tap to restart on the game-over screen. The original
+  // clap-gesture detection in detectGesture() still works as a
+  // fallback for visitors who prefer the body-tracking interaction.
+  if (gameOver) {
+
+    restartGame();
   }
 }
 

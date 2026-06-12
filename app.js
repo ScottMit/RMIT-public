@@ -55,12 +55,12 @@ const SKETCHES = [
     desc: "A diptych scene exploring the matter.js physics engine — Newton's Cradle on the left, a vineyard of hanging chains on the right.",
     src: "sketches/sketch-09-10/index.html"
   },
-  // {
-  //   title: "Flocking Sim",
-  //   artist: "Riley Pascoe",
-  //   desc: "Connecting a p5js flocking simulation to TouchDesigner.",
-  //   src: "sketches/sketch-11/Flocking sim video.mp4"
-  // },
+  {
+    title: "Flocking Sim",
+    artist: "Riley Pascoe",
+    desc: "Connecting a p5js flocking simulation to TouchDesigner.",
+    src: "sketches/sketch-11/Flocking sim video.mp4"
+  },
   // {
   //   title: "Knife Alert",
   //   artist: "Leila Rekic",
