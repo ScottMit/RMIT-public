@@ -241,6 +241,9 @@ function setup() {
   let btn = createButton("Export trails");
   btn.position(20, 650);
   btn.mousePressed(() => exportTrailsOBJ());
+
+  // Mesh is parsed by now (preload-blocked) — drop the loading overlay.
+  document.getElementById('loading-overlay')?.remove();
 }
 
 function draw() {

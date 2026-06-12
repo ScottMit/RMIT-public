@@ -49,6 +49,10 @@ function setup() {
   handPose.detectStart(video, gotResults);
 
   createTouchUI();
+
+  // Preload-blocked, so the ml5 model is ready by now — drop the
+  // black-on-black "Loading…" overlay before the first paint.
+  document.getElementById('loading-overlay')?.remove();
 }
 
 function windowResized() {

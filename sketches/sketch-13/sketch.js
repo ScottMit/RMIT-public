@@ -22,6 +22,10 @@ function setup() {
   colorMode(HSB, 360, 100, 100, 255);
 
   handPose.detectStart(video, gotResults);
+
+  // Preload-blocked, so the ml5 model is ready by now — drop the
+  // black-on-black "Loading…" overlay before the first paint.
+  document.getElementById('loading-overlay')?.remove();
 }
 
 function draw() {

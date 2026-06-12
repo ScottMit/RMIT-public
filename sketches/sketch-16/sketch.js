@@ -117,6 +117,12 @@ function setupFaceTracking() {
       console.log("FaceMesh loaded");
 
       faceMesh.detectStart(video, gotFaces);
+
+      // Model is now actually ready — drop the "Loading…" overlay.
+      // This sketch loads faceMesh asynchronously inside setup()
+      // (not preload), so the model isn't ready at end of setup;
+      // we have to wait for this callback before hiding the overlay.
+      document.getElementById('loading-overlay')?.remove();
     });
   });
 }

@@ -9,8 +9,9 @@ const DAMPING        = 0.5;
 const GRAVITY_STR    = 0.6;
 const BREAK_RATIO    = 2;
 const BREAK_FRAMES   = 30;
-const PIN_THRESHOLD  = 180;
-const PIN_STRENGTH   = 9999; // effectively unbreakable
+const PIN_THRESHOLD  = 180;   // absolute brightness ceiling — never pin pixels brighter than this
+const PIN_PERCENTILE = 0.12;  // share of darkest sampled nodes that become pins (12%)
+const PIN_STRENGTH   = 9999;  // effectively unbreakable
 
 // ── INTERACTION 🎛 ────────────────────────────────────────────
 const MOUSE_RADIUS   = 100;
@@ -192,16 +193,34 @@ function sampleImagePins() {
   }
 }
 
-// Apply pin data to already-built node grid
+// Apply pin data to already-built node grid.
+//
+// Pinning is adaptive: we sort the sampled brightness values and
+// take the value at the PIN_PERCENTILE position as the cut-off, so
+// only the darkest ~12% of nodes get pinned regardless of how dim
+// or bright the captured scene is. PIN_THRESHOLD acts as an
+// absolute ceiling — if even the darkest band is fairly bright
+// (e.g. the camera sees a uniform pale wall), we don't manufacture
+// pins from noise.
+//
+// Why this matters: a webcam frame is dominated by midtones, so
+// the original fixed-threshold approach (intended for clean
+// black-on-white logos) pinned the majority of nodes and froze the
+// whole mesh. Going relative-percentile fixes that for any
+// lighting condition.
 function applyImagePins() {
   if (!imgPixelData) return;
+
+  const sorted = imgPixelData.slice().sort((a, b) => a - b);
+  const cutoffIdx = Math.floor(sorted.length * PIN_PERCENTILE);
+  const dynamicThreshold = Math.min(sorted[cutoffIdx], PIN_THRESHOLD);
 
   let i = 0;
   for (let r = 0; r < ROWS; r++) {
     for (let c = 0; c < COLS; c++) {
       let n          = nodes[r][c];
       let brightness = imgPixelData[i++];
-      let isDark     = brightness < PIN_THRESHOLD;
+      let isDark     = brightness < dynamicThreshold;
 
       if (isDark && !n.pinned) {
         // Pin this node — lock it in place

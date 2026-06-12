@@ -9,6 +9,18 @@ let hands = [];
 const VIDEO_W = 640;
 const VIDEO_H = 480;
 
+// Low-light pre-processing for ml5. Multipliers only affect what's
+// fed to the hand-pose model — the visible scene isn't a video, so
+// there's no display side-effect here. Tune on-site:
+//   1.0 / 1.0  = no change          (well-lit room)
+//   1.4 / 1.2  = mild boost
+//   1.6 / 1.3  = good for dim rooms (default)
+//   2.0 / 1.5  = very dark rooms
+const VIDEO_BRIGHTNESS = 1.6;
+const VIDEO_CONTRAST   = 1.3;
+
+let videoBuffer;
+
 let splitX = 0;
 let splitY = 0;
 let targetX = 0;
@@ -32,7 +44,28 @@ function setup() {
   video.size(VIDEO_W, VIDEO_H);
   video.hide();
 
-  handPose.detectStart(video, gotHands);
+  // Pre-processing buffer for ml5 — brightened + contrasted copy
+  // of the live video frame, refreshed every draw() tick.
+  // pixelDensity(1) is critical — p5.Graphics inherits the global
+  // density (2 on Retina), which would double the underlying canvas
+  // and double every keypoint coordinate ml5 returns. Forcing 1
+  // keeps the buffer at exactly VIDEO_W × VIDEO_H pixels.
+  videoBuffer = createGraphics(VIDEO_W, VIDEO_H);
+  videoBuffer.pixelDensity(1);
+
+  handPose.detectStart(videoBuffer, gotHands);
+
+  // Preload-blocked, so the ml5 model is ready by now — drop the
+  // black-on-black "Loading…" overlay before the first paint.
+  document.getElementById('loading-overlay')?.remove();
+}
+
+function refreshVideoBuffer() {
+  if (!video || !video.width) return;
+  videoBuffer.drawingContext.filter =
+    `brightness(${VIDEO_BRIGHTNESS}) contrast(${VIDEO_CONTRAST})`;
+  videoBuffer.image(video, 0, 0, VIDEO_W, VIDEO_H);
+  videoBuffer.drawingContext.filter = "none";
 }
 
 function windowResized() {
@@ -42,6 +75,7 @@ function windowResized() {
 function draw() {
   background(8, 25, 55);
 
+  refreshVideoBuffer();
   trackHandSpread();
   drawOcean();
   drawFingerDebug();

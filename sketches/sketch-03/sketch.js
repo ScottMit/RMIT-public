@@ -35,6 +35,20 @@ let hitCooldown = 120;
 const VIDEO_W = 1280;
 const VIDEO_H = 720;
 
+// Low-light pre-processing for ml5. The displayed video stays as-is;
+// these multipliers only affect what's fed to the hand-pose model.
+// Tune these on-site once the kiosk is in its actual lighting:
+//   1.0 / 1.0  = no change          (well-lit room)
+//   1.4 / 1.2  = mild boost
+//   1.6 / 1.3  = good for dim rooms (default)
+//   2.0 / 1.5  = very dark rooms
+const VIDEO_BRIGHTNESS = 1.6;
+const VIDEO_CONTRAST   = 1.3;
+
+// Offscreen buffer that holds the brightened/contrasted frame for
+// ml5 to read. Refreshed every draw() tick from the raw video.
+let videoBuffer;
+
 let maxSpeed = 22;
 
 let tipIndexes = [4, 8, 12, 16, 20];
@@ -139,13 +153,41 @@ function setup() {
 
   video.hide();
 
-  handPose.detectStart(video, gotResults);
+  // Pre-processing buffer: ml5 reads from this, not the raw video.
+  // pixelDensity(1) is critical — p5.Graphics inherits the global
+  // density (2 on Retina), which would double the underlying canvas
+  // and double every keypoint coordinate ml5 returns. Forcing 1
+  // keeps the buffer at exactly VIDEO_W × VIDEO_H pixels so our
+  // width/VIDEO_W scaling stays correct.
+  videoBuffer = createGraphics(VIDEO_W, VIDEO_H);
+  videoBuffer.pixelDensity(1);
+
+  handPose.detectStart(videoBuffer, gotResults);
 
   textFont("Arial");
+
+  // Preload-blocked, so the ml5 model is ready by now — drop the
+  // black-on-black "Loading…" overlay before the first paint.
+  document.getElementById('loading-overlay')?.remove();
+}
+
+// Refresh the pre-processing buffer with a brightened / contrasted
+// copy of the current video frame. Canvas2D's `filter` property is
+// GPU-accelerated in modern browsers, so this is essentially free.
+function refreshVideoBuffer() {
+  if (!video || !video.width) return;
+  videoBuffer.drawingContext.filter =
+    `brightness(${VIDEO_BRIGHTNESS}) contrast(${VIDEO_CONTRAST})`;
+  videoBuffer.image(video, 0, 0, VIDEO_W, VIDEO_H);
+  videoBuffer.drawingContext.filter = "none";
 }
 
 function draw() {
   background(0);
+
+  // Keep the ml5 input fresh every tick regardless of game state —
+  // the start screen waits on hand detection too.
+  refreshVideoBuffer();
 
   if (state === "start") {
     drawStartScreen();
