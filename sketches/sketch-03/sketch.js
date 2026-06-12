@@ -29,8 +29,11 @@ let loseDuration = 5000;
 let lastHitTime = 0;
 let hitCooldown = 120;
 
-let W = 1280;
-let H = 720;
+// Video is captured at a fixed resolution for stable ml5 hand-pose
+// detection. The canvas, however, fills the viewport so the video and
+// the game scale to whatever frame the sketch is shown in.
+const VIDEO_W = 1280;
+const VIDEO_H = 720;
 
 let maxSpeed = 22;
 
@@ -45,7 +48,7 @@ function gotResults(results) {
 }
 
 function setup() {
-  createCanvas(W, H);
+  createCanvas(windowWidth, windowHeight);
 
   engine = Engine.create();
   world = engine.world;
@@ -53,7 +56,7 @@ function setup() {
   engine.world.gravity.y = 0.35;
 
   // Balloon
-  ball = Bodies.circle(W / 2, H / 3, 50, {
+  ball = Bodies.circle(width / 2, height / 3, 50, {
     restitution: 0.95,
     frictionAir: 0.012,
     density: 0.00025,
@@ -61,23 +64,23 @@ function setup() {
 
   World.add(world, ball);
 
-  // Walls
+  // Walls — sized and placed against the live canvas
   let t = 120;
 
   walls.push(
-    Bodies.rectangle(-t / 2, H / 2, t, H, {
+    Bodies.rectangle(-t / 2, height / 2, t, height, {
       isStatic: true,
     })
   );
 
   walls.push(
-    Bodies.rectangle(W + t / 2, H / 2, t, H, {
+    Bodies.rectangle(width + t / 2, height / 2, t, height, {
       isStatic: true,
     })
   );
 
   walls.push(
-    Bodies.rectangle(W / 2, -t / 2, W, t, {
+    Bodies.rectangle(width / 2, -t / 2, width, t, {
       isStatic: true,
     })
   );
@@ -128,10 +131,11 @@ function setup() {
     }
   });
 
-  // Camera
+  // Camera — captured at fixed VIDEO_W × VIDEO_H so ml5 hand-pose has
+  // a consistent input regardless of how big the canvas becomes.
   video = createCapture(VIDEO);
 
-  video.size(W, H);
+  video.size(VIDEO_W, VIDEO_H);
 
   video.hide();
 
@@ -164,13 +168,14 @@ function draw() {
 }
 
 function playGame() {
-  // CAMERA
+  // CAMERA — draw the video flipped horizontally and stretched to
+  // fill the canvas so it always reads as a full-frame backdrop.
   push();
 
-  translate(W, 0);
+  translate(width, 0);
   scale(-1, 1);
 
-  image(video, 0, 0);
+  image(video, 0, 0, width, height);
 
   pop();
 
@@ -195,7 +200,7 @@ function playGame() {
   limitBallSpeed();
 
   // Lose condition
-  if (ball.position.y > H + 120) {
+  if (ball.position.y > height + 120) {
     state = "lose";
 
     loseStartTime = millis();
@@ -207,7 +212,7 @@ function playGame() {
   stroke(255, 0, 0);
   strokeWeight(4);
 
-  line(0, H - 20, W, H - 20);
+  line(0, height - 20, width, height - 20);
 
   // Draw balloon
   drawBalloon();
@@ -225,6 +230,12 @@ function playGame() {
 function updateHandBodies() {
   let bodyIndex = 0;
 
+  // Keypoints arrive in VIDEO_W × VIDEO_H space — rescale them onto
+  // the (potentially larger or differently-shaped) canvas before
+  // positioning the physics colliders. Also flip x for selfie mirror.
+  const scaleX = width / VIDEO_W;
+  const scaleY = height / VIDEO_H;
+
   for (let hand of predictions) {
     for (let i of tipIndexes) {
       if (bodyIndex >= handBodies.length) return;
@@ -232,8 +243,8 @@ function updateHandBodies() {
       let kp = hand.keypoints[i];
 
       Body.setPosition(handBodies[bodyIndex], {
-        x: W - kp.x,
-        y: kp.y,
+        x: width - kp.x * scaleX,
+        y: kp.y * scaleY,
       });
 
       bodyIndex++;
@@ -334,13 +345,16 @@ function drawBalloon() {
 }
 
 function drawHandSkeletons() {
+  const scaleX = width / VIDEO_W;
+  const scaleY = height / VIDEO_H;
+
   for (let hand of predictions) {
     for (let kp of hand.keypoints) {
       fill(0, 255, 255);
 
       noStroke();
 
-      circle(W - kp.x, kp.y, 12);
+      circle(width - kp.x * scaleX, kp.y * scaleY, 12);
     }
   }
 }
@@ -363,8 +377,8 @@ function drawUI() {
 
 function resetBall() {
   Body.setPosition(ball, {
-    x: W / 2,
-    y: H / 3,
+    x: width / 2,
+    y: height / 3,
   });
 
   Body.setVelocity(ball, {
@@ -412,17 +426,17 @@ function drawStartScreen() {
 
   textSize(64);
 
-  text("BALLOON KEEPY UPPY", W / 2, H / 2 - 120);
+  text("BALLOON KEEPY UPPY", width / 2, height / 2 - 120);
 
   textSize(28);
 
-  text("Show your hand to start", W / 2, H / 2);
+  text("Show your hand to start", width / 2, height / 2);
 
   textSize(22);
 
-  text("Hit the balloon with your fingertips", W / 2, H / 2 + 60);
+  text("Hit the balloon with your fingertips", width / 2, height / 2 + 60);
 
-  text("Higher levels = stronger wind", W / 2, H / 2 + 100);
+  text("Higher levels = stronger wind", width / 2, height / 2 + 100);
 }
 
 function drawLoseScreen() {
@@ -434,17 +448,32 @@ function drawLoseScreen() {
 
   textSize(72);
 
-  text("YOU LOST", W / 2, H / 2 - 120);
+  text("YOU LOST", width / 2, height / 2 - 120);
 
   fill(255);
 
   textSize(36);
 
-  text("Score: " + score, W / 2, H / 2 - 20);
+  text("Score: " + score, width / 2, height / 2 - 20);
 
-  text("Best: " + bestScore, W / 2, H / 2 + 40);
+  text("Best: " + bestScore, width / 2, height / 2 + 40);
 
   textSize(24);
 
-  text("Returning to start...", W / 2, H / 2 + 120);
+  text("Returning to start...", width / 2, height / 2 + 120);
+}
+
+// Keep the canvas matched to the viewport (gallery resize, fullscreen
+// toggle, browser window resize). The physics walls and balloon are
+// rebuilt against the new dimensions so the play area stays sane.
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+
+  // Reposition static walls to the new edges
+  if (walls.length === 3) {
+    let t = 120;
+    Body.setPosition(walls[0], { x: -t / 2, y: height / 2 });
+    Body.setPosition(walls[1], { x: width + t / 2, y: height / 2 });
+    Body.setPosition(walls[2], { x: width / 2, y: -t / 2 });
+  }
 }

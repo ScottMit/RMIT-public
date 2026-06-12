@@ -146,7 +146,7 @@ function drawIntro() {
   let promptAlpha = introAlpha < 255 ? introAlpha : 180 + sin(introPulse) * 75;
   fill(255, promptAlpha);
   textSize(14);
-  text('CLICK TO JOIN EARTH', cx, cy - 12);
+  text('TOUCH SCREEN TO JOIN EARTH', cx, cy - 12);
 
   // Sub line
   fill(255, introAlpha * 0.5);
@@ -329,7 +329,7 @@ function drawResult() {
   // Prompt
   fill(255);
   textSize(10);
-  text('click to play again', cx, cy + 122);
+  text('touch screen to play again', cx, cy + 122);
 
   // Data credit bottom
   fill(80);

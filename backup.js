@@ -97,12 +97,12 @@ const SKETCHES = [
   //   desc: "A digital kaleidoscope with finger tracking control.",
   //   src: "sketches/sketch-17/index.html"
   // },
-  // {
-  //   title: "Outlast the Cubes",
-  //   artist: "Felix Zylinski",
-  //   desc: "An endless runner game controlled by body pose.",
-  //   src: "sketches/sketch-18/index.html"
-  // }
+  {
+    title: "Outlast the Cubes",
+    artist: "Felix Zylinski",
+    desc: "An endless runner game controlled by body pose.",
+    src: "sketches/sketch-18/index.html"
+  }
 ];
 
 /* ===================================================================== */

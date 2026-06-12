@@ -61,12 +61,12 @@ const SKETCHES = [
     desc: "Connecting a p5js flocking simulation to TouchDesigner.",
     src: "sketches/sketch-11/Flocking sim video.mp4"
   },
-  {
-    title: "Knife Alert",
-    artist: "Leila Rekic",
-    desc: "Knife Alert — recording of the code in action.",
-    src: "sketches/sketch-12/Recording of Code.mp4"
-  },
+  // {
+  //   title: "Knife Alert",
+  //   artist: "Leila Rekic",
+  //   desc: "Knife Alert — recording of the code in action.",
+  //   src: "sketches/sketch-12/Recording of Code.mp4"
+  // },
   {
     title: "Rainbow Trails",
     artist: "Charlotte Roberts",

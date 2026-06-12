@@ -2,10 +2,17 @@ let handPose;
 let video;
 let hands = [];
 
-let splitX = 320;
-let splitY = 240;
-let targetX = 320;
-let targetY = 240;
+// Video is captured at a fixed resolution so ml5 hand-pose has a
+// stable input regardless of how big the canvas becomes. Keypoints
+// returned by ml5 are in this VIDEO_W × VIDEO_H space and get
+// rescaled to canvas space when drawn or used as canvas coordinates.
+const VIDEO_W = 640;
+const VIDEO_H = 480;
+
+let splitX = 0;
+let splitY = 0;
+let targetX = 0;
+let targetY = 0;
 
 let splitRadius = 0;
 let targetRadius = 0;
@@ -15,13 +22,21 @@ function preload() {
 }
 
 function setup() {
-  createCanvas(640, 480);
+  createCanvas(windowWidth, windowHeight);
+
+  // Centre the split point on the live canvas
+  splitX = targetX = width / 2;
+  splitY = targetY = height / 2;
 
   video = createCapture(VIDEO);
-  video.size(width, height);
+  video.size(VIDEO_W, VIDEO_H);
   video.hide();
 
   handPose.detectStart(video, gotHands);
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
 }
 
 function draw() {
@@ -70,8 +85,13 @@ function trackHandSpread() {
 
     let fingerSpread = totalDistance / tips.length;
 
-    targetRadius = map(fingerSpread, 20, 90, 0, 140);
-    targetRadius = constrain(targetRadius, 0, 140);
+    // Tips are now in canvas-pixel space (mirrorPoint scales from
+    // VIDEO_W to width). Scale the original thresholds and output
+    // range by the same factor so "open hand" / "closed hand" still
+    // map to the same visible split radius proportionally.
+    const s = width / VIDEO_W;
+    targetRadius = map(fingerSpread, 20 * s, 90 * s, 0, 140 * s);
+    targetRadius = constrain(targetRadius, 0, 140 * s);
   } else {
     targetRadius = 0;
   }
@@ -103,10 +123,16 @@ function drawOcean() {
       let pushX = 0;
       let pushY = 0;
 
-      if (d < splitRadius + 100 && splitRadius > 5) {
+      // Falloff distance + push force scale with canvas width so the
+      // split's "halo" stays proportional to the screen size.
+      const s = width / VIDEO_W;
+      const falloff = 100 * s;
+      const maxForce = 45 * s;
+
+      if (d < splitRadius + falloff && splitRadius > 5) {
         let angle = atan2(y - splitY, x - splitX);
-        let force = map(d, splitRadius, splitRadius + 100, 45, 0);
-        force = constrain(force, 0, 45);
+        let force = map(d, splitRadius, splitRadius + falloff, maxForce, 0);
+        force = constrain(force, 0, maxForce);
 
         pushX = cos(angle) * force;
         pushY = sin(angle) * force;
@@ -144,9 +170,12 @@ function drawFingerDebug() {
   circle(splitX, splitY, splitRadius * 2);
 }
 
+// Convert an ml5 keypoint (in VIDEO_W × VIDEO_H space) into a canvas
+// coordinate, with horizontal mirror so the on-screen split tracks
+// the viewer's hand like a mirror image.
 function mirrorPoint(p) {
   return {
-    x: width - p.x,
-    y: p.y
+    x: width - p.x * (width / VIDEO_W),
+    y: p.y * (height / VIDEO_H)
   };
 }
