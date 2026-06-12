@@ -11,37 +11,37 @@
    ===================================================================== */
 
 const SKETCHES = [
-  {
-    title: "Earth",
-    artist: "Benjamin Carter",
-    desc: "A simulation exploring the randomness of birth and its influances on life outcomes.",
-    src: "sketches/sketch-01/index.html"
-  },
-  {
-    title: "Pattern Generator",
-    artist: "Ned Cohen",
-    desc: "An interactive, rule-based digital environment that creates geometric patterns for use in CAD and additive manufacturing workflows.",
-    src: "sketches/sketch-02/index.html"
-  },
+  // {
+  //   title: "Earth",
+  //   artist: "Benjamin Carter",
+  //   desc: "A simulation exploring the randomness of birth and its influances on life outcomes.",
+  //   src: "sketches/sketch-01/index.html"
+  // },
+  // {
+  //   title: "Pattern Generator",
+  //   artist: "Ned Cohen",
+  //   desc: "An interactive, rule-based digital environment that creates geometric patterns for use in CAD and additive manufacturing workflows.",
+  //   src: "sketches/sketch-02/index.html"
+  // },
   {
     title: "Keepy Uppy",
     artist: "John Cornwell",
     desc: "A reproduction of the childhood game 'keepy uppy' through the use of machine-learning hand tracking.",
     src: "sketches/sketch-03/index.html"
   },
-  {
-    title: "Slime Mold Agents",
-    artist: "Hugh Hanrahan",
-    desc: "Using slime mold agents to create an optimized path around the 3D mesh.",
-    src: "sketches/sketch-04/index.html"
-  },
+  // {
+  //   title: "Slime Mold Agents",
+  //   artist: "Hugh Hanrahan",
+  //   desc: "Using slime mold agents to create an optimized path around the 3D mesh.",
+  //   src: "sketches/sketch-04/index.html"
+  // },
   // 5 Jack Harman fuzzy map?
-  {
-    title: "Interactive Ocean",
-    artist: "Fergus Lavery",
-    desc: "Using ml5.js and handPose to identify and track hand gestures and influence the state of a generated ocean.",
-    src: "sketches/sketch-06/index.html"
-  },
+  // {
+  //   title: "Interactive Ocean",
+  //   artist: "Fergus Lavery",
+  //   desc: "Using ml5.js and handPose to identify and track hand gestures and influence the state of a generated ocean.",
+  //   src: "sketches/sketch-06/index.html"
+  // },
   // 7 TJ dog pose video?
   {
     title: "Penny Drop",
@@ -55,48 +55,48 @@ const SKETCHES = [
     desc: "A diptych scene exploring the matter.js physics engine — Newton's Cradle on the left, a vineyard of hanging chains on the right.",
     src: "sketches/sketch-09-10/index.html"
   },
-  {
-    title: "Flocking Sim",
-    artist: "Riley Pascoe",
-    desc: "Connecting a p5js flocking simulation to TouchDesigner.",
-    src: "sketches/sketch-11/Flocking sim video.mp4"
-  },
+  // {
+  //   title: "Flocking Sim",
+  //   artist: "Riley Pascoe",
+  //   desc: "Connecting a p5js flocking simulation to TouchDesigner.",
+  //   src: "sketches/sketch-11/Flocking sim video.mp4"
+  // },
   // {
   //   title: "Knife Alert",
   //   artist: "Leila Rekic",
   //   desc: "Knife Alert — recording of the code in action.",
   //   src: "sketches/sketch-12/Recording of Code.mp4"
   // },
-  {
-    title: "Rainbow Trails",
-    artist: "Charlotte Roberts",
-    desc: "Gesture tracking with Rainbow Trails.",
-    src: "sketches/sketch-13/index.html"
-  },
-  {
-    title: "Flow",
-    artist: "Danaisha Shetty",
-    desc: "Exploring flow fields.",
-    src: "sketches/sketch-14/index.html"
-  },
+  // {
+  //   title: "Rainbow Trails",
+  //   artist: "Charlotte Roberts",
+  //   desc: "Gesture tracking with Rainbow Trails.",
+  //   src: "sketches/sketch-13/index.html"
+  // },
+  // {
+  //   title: "Flow",
+  //   artist: "Danaisha Shetty",
+  //   desc: "Exploring flow fields.",
+  //   src: "sketches/sketch-14/index.html"
+  // },
   {
     title: "Membrane",
     artist: "Zac Ure",
     desc: "A Spring-Mass Cloth Simulation.",
     src: "sketches/sketch-15/index.html"
   },
-  {
-    title: "Cymatic Mirror",
-    artist: "Finlay White",
-    desc: "Cymatic patterns that respond to facial expression.",
-    src: "sketches/sketch-16/index.html"
-  },
-  {
-    title: "Digital Kaleidoscope",
-    artist: "Ben Yardley",
-    desc: "A digital kaleidoscope with finger tracking control.",
-    src: "sketches/sketch-17/index.html"
-  },
+  // {
+  //   title: "Cymatic Mirror",
+  //   artist: "Finlay White",
+  //   desc: "Cymatic patterns that respond to facial expression.",
+  //   src: "sketches/sketch-16/index.html"
+  // },
+  // {
+  //   title: "Digital Kaleidoscope",
+  //   artist: "Ben Yardley",
+  //   desc: "A digital kaleidoscope with finger tracking control.",
+  //   src: "sketches/sketch-17/index.html"
+  // },
   {
     title: "Outlast the Cubes",
     artist: "Felix Zylinski",
